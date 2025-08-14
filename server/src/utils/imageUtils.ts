@@ -1,6 +1,5 @@
 import sharp from 'sharp'
 import fs from 'fs/promises'
-import path from 'path'
 
 export async function getImageMetadata(filePath: string) {
   try {

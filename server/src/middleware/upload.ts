@@ -16,10 +16,10 @@ async function ensureUploadDir() {
 ensureUploadDir()
 
 const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
+  destination: async (_req, _file, cb) => {
     cb(null, uploadDir)
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`
     cb(null, uniqueName)
   }
@@ -30,7 +30,7 @@ export const upload = multer({
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE || '52428800')
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     const allowedMimes = [
       'image/jpeg',
       'image/png',

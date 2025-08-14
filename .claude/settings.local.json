@@ -13,7 +13,11 @@
       "Bash(cmd /c:*)",
       "Bash(npm test)",
       "Bash(timeout:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

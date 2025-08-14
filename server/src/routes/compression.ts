@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
@@ -19,29 +19,31 @@ async function ensureProcessedDir() {
 
 ensureProcessedDir()
 
-compressionRouter.post('/compress', async (req, res, next) => {
+compressionRouter.post('/compress', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { imageId, quality = 80, format = 'jpeg' } = req.body
 
     if (!imageId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: true,
         message: 'Image ID is required',
         code: 'MISSING_IMAGE_ID',
         statusCode: 400
       })
+      return
     }
 
     const files = await fs.readdir(uploadDir)
     const imageFile = files.find(file => file.includes(imageId))
 
     if (!imageFile) {
-      return res.status(404).json({
+      res.status(404).json({
         error: true,
         message: 'Image not found',
         code: 'IMAGE_NOT_FOUND',
         statusCode: 404
       })
+      return
     }
 
     const inputPath = path.join(uploadDir, imageFile)
@@ -82,7 +84,7 @@ compressionRouter.post('/compress', async (req, res, next) => {
   }
 })
 
-compressionRouter.get('/download/:filename', async (req, res, next) => {
+compressionRouter.get('/download/:filename', async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
   try {
     const { filename } = req.params
     const filePath = path.join(processedDir, filename)

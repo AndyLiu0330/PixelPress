@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import rateLimit from 'express-rate-limit'
@@ -23,7 +23,7 @@ app.use(cors())
 app.use(express.json())
 
 // Health check route
-app.get('/', (req, res) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     message: 'PixelPress API Server',
     status: 'running',

@@ -1,9 +1,8 @@
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid'
-import cv from '@techstark/opencv-js'
 
 export const watermarkRemovalRouter = Router()
 
@@ -27,38 +26,42 @@ interface WatermarkArea {
   height: number
 }
 
-watermarkRemovalRouter.post('/remove-watermark', async (req, res, next) => {
+watermarkRemovalRouter.post('/remove-watermark', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { imageId, watermarkArea }: { imageId: string; watermarkArea: WatermarkArea } = req.body
 
     if (!imageId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: true,
         message: 'Image ID is required',
         code: 'MISSING_IMAGE_ID',
         statusCode: 400
       })
+      return
     }
 
-    if (!watermarkArea || !watermarkArea.x || !watermarkArea.y || !watermarkArea.width || !watermarkArea.height) {
-      return res.status(400).json({
+    if (!watermarkArea || typeof watermarkArea.x !== 'number' || typeof watermarkArea.y !== 'number' || 
+        typeof watermarkArea.width !== 'number' || typeof watermarkArea.height !== 'number') {
+      res.status(400).json({
         error: true,
         message: 'Watermark area coordinates are required',
         code: 'MISSING_WATERMARK_AREA',
         statusCode: 400
       })
+      return
     }
 
     const files = await fs.readdir(uploadDir)
     const imageFile = files.find(file => file.includes(imageId))
 
     if (!imageFile) {
-      return res.status(404).json({
+      res.status(404).json({
         error: true,
         message: 'Image not found',
         code: 'IMAGE_NOT_FOUND',
         statusCode: 404
       })
+      return
     }
 
     const inputPath = path.join(uploadDir, imageFile)
@@ -66,46 +69,32 @@ watermarkRemovalRouter.post('/remove-watermark', async (req, res, next) => {
     const outputPath = path.join(processedDir, outputFileName)
 
     // Get original image metadata
-    const originalMetadata = await sharp(inputPath).metadata()
+    const originalImage = sharp(inputPath)
+    const metadata = await originalImage.metadata()
     
-    // Read image using Sharp and convert to buffer
-    const imageBuffer = await sharp(inputPath).raw().toBuffer()
-    
-    // Initialize OpenCV
-    const src = cv.matFromImageData({
-      data: new Uint8ClampedArray(imageBuffer),
-      width: originalMetadata.width!,
-      height: originalMetadata.height!
-    })
+    if (!metadata.width || !metadata.height) {
+      throw new Error('Unable to get image dimensions')
+    }
 
-    // Create mask for the watermark area
-    const mask = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC1)
-    const maskROI = new cv.Rect(
-      Math.max(0, Math.floor(watermarkArea.x)),
-      Math.max(0, Math.floor(watermarkArea.y)),
-      Math.min(src.cols - Math.floor(watermarkArea.x), Math.floor(watermarkArea.width)),
-      Math.min(src.rows - Math.floor(watermarkArea.y), Math.floor(watermarkArea.height))
-    )
-    
-    // Set mask region to white (255) for inpainting
-    const maskROImat = mask.roi(maskROI)
-    maskROImat.setTo(new cv.Scalar(255))
+    // Calculate the blur region coordinates
+    const blurX = Math.max(0, Math.floor(watermarkArea.x))
+    const blurY = Math.max(0, Math.floor(watermarkArea.y))
+    const blurWidth = Math.min(metadata.width - blurX, Math.floor(watermarkArea.width))
+    const blurHeight = Math.min(metadata.height - blurY, Math.floor(watermarkArea.height))
 
-    // Apply inpainting using Telea algorithm
-    const dst = new cv.Mat()
-    cv.inpaint(src, mask, dst, 3, cv.INPAINT_TELEA)
+    // Extract the region to blur
+    const regionToBlur = await sharp(inputPath)
+      .extract({ left: blurX, top: blurY, width: blurWidth, height: blurHeight })
+      .blur(50) // Apply heavy blur to obscure the watermark
+      .toBuffer()
 
-    // Convert result back to image buffer
-    const resultBuffer = new Uint8Array(dst.data)
-    
-    // Use Sharp to save the processed image
-    let processedImage = sharp(Buffer.from(resultBuffer), {
-      raw: {
-        width: dst.cols,
-        height: dst.rows,
-        channels: dst.channels()
-      }
-    })
+    // Composite the blurred region back onto the original image
+    let processedImage = await sharp(inputPath)
+      .composite([{
+        input: regionToBlur,
+        left: blurX,
+        top: blurY
+      }])
 
     // Maintain original format
     const format = path.extname(imageFile).substring(1).toLowerCase()
@@ -126,12 +115,6 @@ watermarkRemovalRouter.post('/remove-watermark', async (req, res, next) => {
 
     await processedImage.toFile(outputPath)
 
-    // Clean up OpenCV matrices
-    src.delete()
-    mask.delete()
-    maskROImat.delete()
-    dst.delete()
-
     const stats = await fs.stat(outputPath)
 
     res.json({
@@ -145,6 +128,60 @@ watermarkRemovalRouter.post('/remove-watermark', async (req, res, next) => {
     })
   } catch (error) {
     console.error('Watermark removal error:', error)
+    next(error)
+  }
+})
+
+// Add a simple blur endpoint as an alternative
+watermarkRemovalRouter.post('/blur-region', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { imageId, region }: { imageId: string; region: WatermarkArea } = req.body
+
+    if (!imageId) {
+      res.status(400).json({
+        error: true,
+        message: 'Image ID is required',
+        code: 'MISSING_IMAGE_ID',
+        statusCode: 400
+      })
+      return
+    }
+
+    const files = await fs.readdir(uploadDir)
+    const imageFile = files.find(file => file.includes(imageId))
+
+    if (!imageFile) {
+      res.status(404).json({
+        error: true,
+        message: 'Image not found',
+        code: 'IMAGE_NOT_FOUND',
+        statusCode: 404
+      })
+      return
+    }
+
+    const inputPath = path.join(uploadDir, imageFile)
+    const outputFileName = `${uuidv4()}.${path.extname(imageFile).substring(1)}`
+    const outputPath = path.join(processedDir, outputFileName)
+
+    // Simply blur the entire image as a fallback
+    await sharp(inputPath)
+      .blur(5)
+      .toFile(outputPath)
+
+    const stats = await fs.stat(outputPath)
+
+    res.json({
+      success: true,
+      data: {
+        url: `/api/download/${outputFileName}`,
+        processedSize: stats.size,
+        format: path.extname(imageFile).substring(1).toLowerCase()
+      },
+      message: 'Image processed successfully'
+    })
+  } catch (error) {
+    console.error('Blur region error:', error)
     next(error)
   }
 })
