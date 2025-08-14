@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm init:*)",
+      "Bash(npm install)",
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)",
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(set PORT=3001)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c:*)",
+      "Bash(npm test)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

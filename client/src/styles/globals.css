@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply backdrop-blur-md bg-gray-900/10 border border-gray-800/20;
+  }
+  
+  .gradient-border {
+    @apply relative;
+    background-clip: padding-box;
+  }
+  
+  .gradient-border::before {
+    @apply absolute inset-0 rounded-xl bg-gradient-to-r from-primary-400 via-accent-500 to-primary-600 -z-10;
+    content: "";
+    margin: -2px;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-600;
+  }
+  
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+  
+  .pattern-dots {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
