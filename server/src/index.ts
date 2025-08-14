@@ -21,6 +21,22 @@ const limiter = rateLimit({
 
 app.use(cors())
 app.use(express.json())
+
+// Health check route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'PixelPress API Server',
+    status: 'running',
+    endpoints: {
+      upload: 'POST /api/upload',
+      compress: 'POST /api/compress',
+      convert: 'POST /api/convert',
+      download: 'GET /api/download/:filename',
+      watermark: 'POST /api/watermark/remove'
+    }
+  })
+})
+
 app.use('/api', limiter)
 
 app.use('/api', uploadRouter)

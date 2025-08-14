@@ -3,7 +3,7 @@ import { ImageUploader } from './components/ImageUploader'
 import { ImagePreview } from './components/ImagePreview'
 import { CompressionSettings } from './components/CompressionSettings'
 import { WatermarkRemoval } from './components/WatermarkRemoval'
-import { Sparkles, Zap, Shield, Globe, Compress, Eraser } from 'lucide-react'
+import { Sparkles, Zap, Shield, Globe, Archive, Eraser } from 'lucide-react'
 
 function App() {
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
@@ -81,7 +81,7 @@ function App() {
                             : 'bg-white/10 text-white/70 hover:bg-white/20'
                         }`}
                       >
-                        <Compress className="w-4 h-4" />
+                        <Archive className="w-4 h-4" />
                         Compress
                       </button>
                       <button
