@@ -17,7 +17,16 @@
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
       "Bash(cat:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(python:*)",
+      "Bash(powershell:*)",
+      "AudioPlayback",
+      "FileSystem(read:.claude/hooks/*)",
+      "FileSystem(execute:.claude/hooks/*)",
+      "Hooks(UserPromptSubmit)",
+      "Hooks(ResponseSubmit)",
+      "Hooks(*)",
+      "mcp__playwright__*"
     ],
     "deny": [],
     "ask": []

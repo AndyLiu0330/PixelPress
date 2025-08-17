@@ -64,8 +64,7 @@ The application will be available at:
 ### Production Build
 
 ```bash
-# Build both frontend and backend
-npm run build
+
 
 # Start production server
 npm run start

@@ -19,6 +19,11 @@
     "install:all": "npm install"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "form-data": "^4.0.4",
+    "node-fetch": "^2.7.0"
   }
 }

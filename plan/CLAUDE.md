@@ -2,6 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+The most import key: thinks hard, answer short
 ## Project Overview
 
 PixelPress is a lightweight and easy-to-use image tool that supports compression and format conversion for various image types. Users can simply upload an image to quickly reduce its file size, saving storage space while maintaining clarity. It can also convert images to common formats such as JPEG, PNG, and WebP, making them convenient to use across different platforms and devices.

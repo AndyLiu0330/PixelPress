@@ -3,6 +3,8 @@ import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid'
+import { InpaintingEngine, generateProcessingOptions, validateAndOptimize } from '../utils/inpaintingEngine.js'
+import { InpaintingOptions, WatermarkArea } from '../types/inpainting.js'
 
 export const watermarkRemovalRouter = Router()
 
@@ -18,13 +20,6 @@ async function ensureProcessedDir() {
 }
 
 ensureProcessedDir()
-
-interface WatermarkArea {
-  x: number
-  y: number
-  width: number
-  height: number
-}
 
 watermarkRemovalRouter.post('/remove-watermark', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -85,7 +80,7 @@ watermarkRemovalRouter.post('/remove-watermark', async (req: Request, res: Respo
     // Extract the region to blur
     const regionToBlur = await sharp(inputPath)
       .extract({ left: blurX, top: blurY, width: blurWidth, height: blurHeight })
-      .blur(50) // Apply heavy blur to obscure the watermark
+      .blur(50)
       .toBuffer()
 
     // Composite the blurred region back onto the original image
@@ -135,7 +130,7 @@ watermarkRemovalRouter.post('/remove-watermark', async (req: Request, res: Respo
 // Add a simple blur endpoint as an alternative
 watermarkRemovalRouter.post('/blur-region', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { imageId, region }: { imageId: string; region: WatermarkArea } = req.body
+    const { imageId }: { imageId: string; region?: WatermarkArea } = req.body
 
     if (!imageId) {
       res.status(400).json({
@@ -182,6 +177,97 @@ watermarkRemovalRouter.post('/blur-region', async (req: Request, res: Response, 
     })
   } catch (error) {
     console.error('Blur region error:', error)
+    next(error)
+  }
+})
+
+// Enhanced watermark removal endpoint using advanced inpainting
+watermarkRemovalRouter.post('/remove-watermark-advanced', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { imageId, watermarkArea, options }: { 
+      imageId: string; 
+      watermarkArea: WatermarkArea; 
+      options?: Partial<InpaintingOptions> 
+    } = req.body
+
+    if (!imageId) {
+      res.status(400).json({
+        error: true,
+        message: 'Image ID is required',
+        code: 'MISSING_IMAGE_ID',
+        statusCode: 400
+      })
+      return
+    }
+
+    if (!watermarkArea || typeof watermarkArea.x !== 'number' || typeof watermarkArea.y !== 'number' || 
+        typeof watermarkArea.width !== 'number' || typeof watermarkArea.height !== 'number') {
+      res.status(400).json({
+        error: true,
+        message: 'Watermark area coordinates are required',
+        code: 'MISSING_WATERMARK_AREA',
+        statusCode: 400
+      })
+      return
+    }
+
+    const files = await fs.readdir(uploadDir)
+    const imageFile = files.find(file => file.includes(imageId))
+
+    if (!imageFile) {
+      res.status(404).json({
+        error: true,
+        message: 'Image not found',
+        code: 'IMAGE_NOT_FOUND',
+        statusCode: 404
+      })
+      return
+    }
+
+    const inputPath = path.join(uploadDir, imageFile)
+    const imageBuffer = await fs.readFile(inputPath)
+    
+    // Initialize the advanced inpainting engine
+    const inpaintingEngine = new InpaintingEngine()
+    
+    // Analyze context and generate optimal processing options
+    const image = sharp(imageBuffer)
+    const context = await inpaintingEngine.analyzeContext(image, watermarkArea)
+    const processingOptions = options ? 
+      { ...generateProcessingOptions(context), ...options } : 
+      generateProcessingOptions(context)
+
+    // Process with enhanced algorithm
+    const result = await inpaintingEngine.processWatermarkRemoval(
+      imageBuffer, 
+      watermarkArea, 
+      processingOptions
+    )
+
+    // Validate and optimize the result
+    const optimizedResult = await validateAndOptimize(result, context)
+
+    // Save the processed image
+    const outputFileName = `enhanced_${uuidv4()}.${path.extname(imageFile).substring(1)}`
+    const outputPath = path.join(processedDir, outputFileName)
+    await fs.writeFile(outputPath, optimizedResult.buffer)
+
+    res.json({
+      success: true,
+      data: {
+        url: `/api/download/${outputFileName}`,
+        processedSize: optimizedResult.size,
+        format: path.extname(imageFile).substring(1).toLowerCase(),
+        qualityMetrics: optimizedResult.qualityMetrics,
+        processingTime: optimizedResult.duration,
+        method: context.recommendedMethod,
+        textureComplexity: Math.round(context.textureComplexity * 100) / 100,
+        edgeStrength: Math.round(context.edgeStrength * 100) / 100
+      },
+      message: 'Watermark removed using advanced inpainting techniques'
+    })
+  } catch (error) {
+    console.error('Advanced watermark removal error:', error)
     next(error)
   }
 })
