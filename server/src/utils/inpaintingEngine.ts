@@ -57,6 +57,7 @@ export class InpaintingEngine {
         throw new Error(`Invalid region bounds: x=${x}, y=${y}, width=${width}, height=${height}, imageSize=${metadata.width}x${metadata.height}`)
       }
 
+      console.log('InpaintingEngine: Processing region:', { x, y, width, height, imageSize: `${metadata.width}x${metadata.height}` })
       const region = { x, y, width, height }
 
       const context = await this.analyzeContext(image, region)
@@ -64,19 +65,26 @@ export class InpaintingEngine {
 
       let processedImage: sharp.Sharp
 
+      console.log('InpaintingEngine: Recommended method:', context.recommendedMethod)
       switch (context.recommendedMethod) {
         case 'texture-synthesis':
+          console.log('InpaintingEngine: Using texture-synthesis method')
           processedImage = await this.textureBasedInpainting(image, region, adaptedOptions)
           break
         case 'patch-based':
+          console.log('InpaintingEngine: Using patch-based method')
           processedImage = await this.patchBasedInpainting(image, region, adaptedOptions)
           break
         case 'hybrid':
+          console.log('InpaintingEngine: Using hybrid method')
           processedImage = await this.hybridInpainting(image, region, adaptedOptions)
           break
         default:
+          console.log('InpaintingEngine: Using basic method')
           processedImage = await this.basicInpainting(image, region, adaptedOptions)
       }
+
+      console.log('InpaintingEngine: Processing completed, converting to buffer...')
 
       const resultBuffer = await processedImage.toBuffer()
       const stats = { size: resultBuffer.length }
@@ -254,6 +262,7 @@ export class InpaintingEngine {
         throw new Error(`Invalid extract parameters: ${JSON.stringify(extractParams)}`)
       }
 
+      console.log('BasicInpainting: Extracting with params:', extractParams)
       const blurredRegion = await image
         .extract(extractParams)
         .blur(30)
@@ -292,18 +301,28 @@ export class InpaintingEngine {
     region: WatermarkArea,
     _featherMask: Buffer
   ): Promise<sharp.Sharp> {
-    const inpaintedImage = sharp(inpaintedContent, {
-      raw: { width: region.width, height: region.height, channels: 3 }
-    })
+    console.log('BlendWithOriginal: inpaintedContent length:', inpaintedContent.length, 'region:', region)
+    
+    try {
+      const inpaintedImage = sharp(inpaintedContent, {
+        raw: { width: region.width, height: region.height, channels: 3 }
+      })
 
-    return originalImage.composite([
-      {
-        input: await inpaintedImage.toBuffer(),
-        left: region.x,
-        top: region.y,
-        blend: 'over'
-      }
-    ])
+      const inpaintedBuffer = await inpaintedImage.png().toBuffer()
+      console.log('BlendWithOriginal: inpaintedBuffer created, length:', inpaintedBuffer.length)
+
+      return originalImage.composite([
+        {
+          input: inpaintedBuffer,
+          left: region.x,
+          top: region.y,
+          blend: 'over'
+        }
+      ])
+    } catch (error) {
+      console.error('BlendWithOriginal error:', error)
+      throw error
+    }
   }
 
   private async evaluateQuality(
