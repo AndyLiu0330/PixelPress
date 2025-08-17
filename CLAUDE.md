@@ -1,0 +1,1 @@
+- If fix a bug or add new feature, use playright to verify frontend and backend. Also run test case related to check.
