@@ -28,7 +28,11 @@
       "Hooks(*)",
       "mcp__playwright__*",
       "Bash(node:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "mcp__playwright__browser_file_upload",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

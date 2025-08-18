@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { ImageUploader } from './components/ImageUploader'
-import { ImagePreview } from './components/ImagePreview'
-import { CompressionSettings } from './components/CompressionSettings'
-import { WatermarkRemoval } from './components/WatermarkRemoval'
+import { ImageUploader } from './components/common/ImageUploader'
+import { ImagePreview } from './components/common/ImagePreview'
+import { CompressionSettings } from './components/compression/CompressionSettings'
+import { WatermarkRemoval } from './components/watermark/WatermarkRemoval'
 import { Sparkles, Zap, Shield, Globe, Archive, Eraser } from 'lucide-react'
 
 function App() {

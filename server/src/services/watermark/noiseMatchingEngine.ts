@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { NoiseProfile, Region, Size } from '../types/inpainting.js'
+import { NoiseProfile, Region, Size } from '../../types/inpainting.js'
 
 export class NoiseMatchingEngine {
   async analyzeLocalNoise(image: sharp.Sharp, region: Region): Promise<NoiseProfile> {

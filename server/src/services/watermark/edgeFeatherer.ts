@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { Region, Size } from '../types/inpainting.js'
+import { Region, Size } from '../../types/inpainting.js'
 
 export class EdgeFeatherer {
   async createFeatherMask(

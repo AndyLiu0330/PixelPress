@@ -8,7 +8,7 @@ import {
   BALANCED_OPTIONS,
   HIGH_PERFORMANCE_OPTIONS,
   HIGH_QUALITY_OPTIONS
-} from '../types/inpainting.js'
+} from '../../types/inpainting.js'
 import { TextureAnalyzer } from './textureAnalyzer.js'
 import { EdgeFeatherer } from './edgeFeatherer.js'
 import { MultiDirectionalSampler } from './multiDirectionalSampler.js'

@@ -1,4 +1,4 @@
-import { Region, EdgeMap, InterpolationMethod } from '../types/inpainting.js'
+import { Region, EdgeMap, InterpolationMethod } from '../../types/inpainting.js'
 
 export class AdvancedInterpolator {
   async interpolateWithEdgePreservation(

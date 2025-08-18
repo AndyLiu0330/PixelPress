@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { TextureDescriptor, Region, StructureInfo, ColorStats } from '../types/inpainting.js'
+import { TextureDescriptor, Region, StructureInfo, ColorStats } from '../../types/inpainting.js'
 
 export class TextureAnalyzer {
   async analyzeRegion(image: sharp.Sharp, region: Region): Promise<TextureDescriptor> {

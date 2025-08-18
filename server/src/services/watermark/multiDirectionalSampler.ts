@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { DirectionalSamples, Patch, Region, Direction, PATCH_SIZE, SAMPLE_DISTANCE } from '../types/inpainting.js'
+import { DirectionalSamples, Patch, Region, Direction, PATCH_SIZE, SAMPLE_DISTANCE } from '../../types/inpainting.js'
 
 export class MultiDirectionalSampler {
   async sampleSurroundingContent(
